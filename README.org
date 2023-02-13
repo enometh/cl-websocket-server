@@ -24,7 +24,7 @@
   WEBSOCKET-SERVER​> (setf *chat-handler* (clack:clackup #'chat-server :port 12345))
 #+END_SRC
 
-  Open the file [[websocket-example.html]] with a Webbrowser.  
+  Open the file = [[websocket-example.html]] = with a Webbrowser.  
 
   Send to all connected Browser clients with
 

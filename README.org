@@ -33,8 +33,9 @@
 #+END_SRC
 
   To send a message/evaluate code from the Browser clients, simply
-  send a lisp expression as string from the client to the server. It
-  will be evaluated by Common Lisp in the websocket package context.
+  send a lisp expression as string from the client to the server
+  (using javascript). It will be evaluated by Common Lisp in the
+  websocket package context.
 
 ** License
 

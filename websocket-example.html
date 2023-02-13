@@ -1,26 +1,21 @@
 <!DOMTYPE html>
-<html>
-  <title>CL Websocket example</title>
   <style>
 .textbox{
    font-family: monospace;
 }
 </style>
   <header>
-    <title>linkHut.html</title>
+    <title>websocket-example.html</title>
   </header>
 <body>
-  <div class="textbox" id="linkhut_header">
-  enabled | num peers | quantum | start stop sync | tempo | beats | state | metro
-  </div>
   <br/>
-  <div class="textbox" id="linkhut">
-    Guten    Tag!
+  <div class="textbox" id="websocket-example">
+    Hi there
   </div>
 </body>
 <script>
 let socket = new WebSocket("ws://localhost:12345");
-let msgBox = document.getElementById("linkhut");
+let msgBox = document.getElementById("websocket-example");
 socket.onopen = function(e) {
 console.log("[open] Connection established");
 console.log("Sending to server");

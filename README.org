@@ -38,6 +38,6 @@
 
 ** License
 
-   GPL 2.0 or later. See [[LICENCE]]
+   GPL 2.0 or later. See [[LICENSE]]
 
 

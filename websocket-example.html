@@ -1,0 +1,49 @@
+<!DOMTYPE html>
+<html>
+  <title>CL Websocket example</title>
+  <style>
+.textbox{
+   font-family: monospace;
+}
+</style>
+  <header>
+    <title>linkHut.html</title>
+  </header>
+<body>
+  <div class="textbox" id="linkhut_header">
+  enabled | num peers | quantum | start stop sync | tempo | beats | state | metro
+  </div>
+  <br/>
+  <div class="textbox" id="linkhut">
+    Guten    Tag!
+  </div>
+</body>
+<script>
+let socket = new WebSocket("ws://localhost:12345");
+let msgBox = document.getElementById("linkhut");
+socket.onopen = function(e) {
+console.log("[open] Connection established");
+console.log("Sending to server");
+socket.send("Heartbeat");
+}
+
+socket.onmessage = function(event) {
+<!-- console.log(`[message] Data received from server: ${event.data}`); -->
+msgBox.textContent = `${event.data}`;
+};
+
+socket.onclose = function(event) {
+  if (event.wasClean) {
+    console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+  }
+  else {
+    // e.g. server process killed or network down // event.code is usually 1006 in this case
+    console.log('[close] Connection died');
+  }
+};
+
+socket.onerror = function(error) {
+  console.log(`[error] ${error.message}`);
+};
+</script>
+</html>

@@ -1,0 +1,44 @@
+* cl-websocket-server
+  This is a simple framework for a websocket server in Common Lisp
+  intended as an quick and easy way to add displays or interactive
+  guis, etc. to Common Lisp.
+  
+* Setup
+
+  using [[https://www.quicklisp.org/][quicklisp]]:
+
+#+BEGIN_SRC bash
+    $ ln -s <path-to-this-repo> ~/quicklisp/local-projects
+#+END_SRC
+
+   Start a cl REPL and issue
+
+#+BEGIN_SRC lisp
+  CL-USER​> (ql:quickload "websocket-server")
+#+END_SRC
+
+  To start the webserver:
+
+#+BEGIN_SRC lisp
+  CL-USER​> (in-package :websocket-server)
+  WEBSOCKET-SERVER​> (setf *chat-handler* (clack:clackup #'chat-server :port 12345))
+#+END_SRC
+
+  Open the file =websocket-example.html= with a Webbrowser.  
+
+  Send to all connected Browser clients with
+
+#+BEGIN_SRC lisp
+  WEBSOCKET-SERVER​> (broadcast-message "Hello World")
+#+END_SRC
+
+  To send a message/evaluate code from the Browser clients, simply
+  send a lisp expression as string from the client to the server. It
+  will be evaluated by Common Lisp in the websocket package context.
+
+** License
+
+   gpl 2.0 or later
+
+
+

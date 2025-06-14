@@ -1,0 +1,26 @@
+;;; -*- Mode: LISP; Package: :cl-user; BASE: 10; Syntax: ANSI-Common-Lisp; -*-
+;;;
+;;;   Time-stamp: <>
+;;;   Touched: Sat Jun 14 22:14:36 2025 +0530 <enometh@net.meer>
+;;;   Bugs-To: enometh@net.meer
+;;;   Status: Experimental.  Do not redistribute
+;;;   Copyright (C) 2025 Madhu.  All Rights Reserved.
+;;;
+(in-package "CL-USER")
+
+(defvar *websocket-server-source-dir*
+  (merge-pathnames "Github/cl-websocket-server/" (translate-logical-pathname "EXTERN:")))
+(defvar *websocket-server-binary-dir* (binary-directory *websocket-server-source-dir*))
+
+(mk:defsystem :websocket-server
+  :source-pathname *websocket-server-source-dir*
+  :binary-pathname *websocket-server-binary-dir*
+  :source-extension "lisp"
+  :depends-on (:clack
+	       :websocket-driver)
+  :components ((:file "package")
+	       (:file "websocket-server")))
+
+#+nil
+(mk:oos :websocket-server :load :compile-during-load t)
+

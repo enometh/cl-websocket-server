@@ -50,12 +50,14 @@
                          (lambda () (handle-new-connection ws)))
     (websocket-driver:on :message ws
                          (lambda (msg)
-                           (broadcast-to-room ws msg)
-                           (let* ((form (read-from-string msg))
-                                  (fn (if (listp form)
-                                          (symbol-function
-                                           (intern (string-upcase (format nil "~a" (first form))) 'websocket-server)))))
-                             (and fn (apply fn (rest form))))))
+			   (cond ((equal msg "Heartbeat")
+				  (websocket-driver:send ws "Pong"))
+				 (t (broadcast-to-room ws msg)
+				    (let* ((form (read-from-string msg))
+					   (fn (if (listp form)
+						   (symbol-function
+						    (intern (string-upcase (format nil "~a" (first form))) 'websocket-server)))))
+				      (and fn (apply fn (rest form))))))))
     (websocket-driver:on :close ws
                          (lambda (&key code reason)
                            (declare (ignore code reason))

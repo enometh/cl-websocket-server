@@ -14,12 +14,32 @@
   </div>
 </body>
 <script>
-let socket = new WebSocket("ws://localhost:12345");
+
+let apr = "ws://localhost:12345";
+let socket = new WebSocket(apr);
 let msgBox = document.getElementById("websocket-example");
+var pingerid;
+
+function ping_ws() {
+    if (socket.readyState == 1) {
+	socket.send("Heartbeat");
+    }
+}
+
+function shutdown_ws() {
+    if (socket != null) {
+	socket.onerror = null;
+	socket.onclose = null;
+	socket.close ();
+	socket = null;
+    }
+    msgBox.textContent = "shutdown"
+    clearInterval (pingerid);
+}
+
 socket.onopen = function(e) {
 console.log("[open] Connection established");
-console.log("Sending to server");
-socket.send("Heartbeat");
+pingerid = setInterval (function () {ping_ws();}, 40000);
 }
 
 socket.onmessage = function(event) {
@@ -35,6 +55,7 @@ socket.onclose = function(event) {
     // e.g. server process killed or network down // event.code is usually 1006 in this case
     console.log('[close] Connection died');
   }
+  shutdown_ws();
 };
 
 socket.onerror = function(error) {

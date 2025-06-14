@@ -51,6 +51,28 @@
 		  (find-symbol (string-upcase (format nil "~a" (first form))) 'websocket-server)))))
     (and fn (apply fn (rest form)))))
 
+
+(defvar *id-map* (make-id-map))
+
+(defvar *query-time-out* 5)
+
+(defstruct mailbox result semaphore default-answer)
+
+(defun query (connection script &optional default-answer)
+  (let* ((mbox (make-mailbox :semaphore (bt:make-semaphore)
+			    :default-answer default-answer))
+	 (id (id-map-add *id-map* mbox)))
+    (websocket-driver:send
+     connection
+     (format nil "socket.send (\"~A:\"+eval(\"~A\"));"
+	     id
+	     (escape-string script)))
+    (unwind-protect
+	 (progn (bt:wait-on-semaphore (mailbox-semaphore mbox) :timeout *query-time-out*)
+		(or (mailbox-result mbox)
+		    (mailbox-default-answer mbox)))
+      (id-map-remove *id-map* id))))
+
 (defun chat-server (env)
   (let ((ws (websocket-driver:make-server env)))
     (setf *ws* ws)
@@ -59,9 +81,14 @@
     (websocket-driver:on :message ws
                          (lambda (msg)
 			   (cond ((equal msg "Heartbeat")
-				  (websocket-driver:send ws "Pong"))
+				  (websocket-driver:send ws "'Pong'"))
 				 ((user:prefixp "eval:" msg)
-				  (handle-chat-msg ws (subseq msg 5))))))
+				  (handle-chat-msg ws (subseq msg 5)))
+				 (t	;javascript execution result
+				  (let* ((p (position #\: msg))
+					 (mbox (id-map-peek *id-map* (parse-integer msg :end p))))
+				    (setf (mailbox-result mbox) (subseq msg (1+ p)))
+				    (bt:signal-semaphore (mailbox-semaphore mbox)))))))
     (websocket-driver:on :close ws
                          (lambda (&key code reason)
                            (declare (ignore code reason))

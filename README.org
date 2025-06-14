@@ -29,7 +29,8 @@
   Send to all connected Browser clients with
 
 #+BEGIN_SRC lisp
-  WEBSOCKET-SERVER​> (broadcast-message "Hello World")
+  WEBSOCKET-SERVER​> (broadcast-message "'Hello World'")
+  ;; NOTE: message has to be 'literal string',  as it is now always evaluated
 #+END_SRC
 
   To send a message/evaluate code from the Browser clients, simply

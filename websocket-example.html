@@ -45,6 +45,7 @@ socket.onopen = function(e) {
 socket.onmessage = function(event) {
 	<!-- console.log(`[message] Data received from server: ${event.data}`); -->
 	msgBox.textContent = `${event.data}`;
+	eval(event.data);
 };
 
 socket.onclose = function(event) {

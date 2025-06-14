@@ -7,4 +7,5 @@
   (:use #:cl)
   (:export
    #:chat-server
-   #:broadcast-message))
+   #:broadcast-message
+   "QUERY"))

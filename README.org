@@ -37,6 +37,10 @@
   (using javascript). It will be evaluated by Common Lisp in the
   websocket package context.
 
+#+BEGIN_SRC javascript
+  socket.send('eval:(warn "BEWARE")');
+#+END_SRC
+
 ** License
 
    GPL 2.0 or later. See [[LICENSE]]

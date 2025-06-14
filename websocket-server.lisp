@@ -43,21 +43,26 @@
     (loop :for con :being :the :hash-key :of *connections* :do
           (websocket-driver:send con message))))
 
+(defun handle-chat-msg (ws msg)
+  (broadcast-to-room ws msg)
+  (let* ((form (read-from-string msg))
+	 (fn (if (listp form)
+		 (symbol-function
+		  (find-symbol (string-upcase (format nil "~a" (first form))) 'websocket-server)))))
+    (and fn (apply fn (rest form)))))
+
+(defun handle-message (ws msg)
+  (cond ((equal msg "Heartbeat")
+	 (websocket-driver:send ws "'Pong'"))
+	(t (handle-chat-msg ws msg))))
+
 (defun chat-server (env)
   (let ((ws (websocket-driver:make-server env)))
     (setf *ws* ws)
     (websocket-driver:on :open ws
                          (lambda () (handle-new-connection ws)))
     (websocket-driver:on :message ws
-                         (lambda (msg)
-			   (cond ((equal msg "Heartbeat")
-				  (websocket-driver:send ws "Pong"))
-				 (t (broadcast-to-room ws msg)
-				    (let* ((form (read-from-string msg))
-					   (fn (if (listp form)
-						   (symbol-function
-						    (intern (string-upcase (format nil "~a" (first form))) 'websocket-server)))))
-				      (and fn (apply fn (rest form))))))))
+                         (lambda (msg) (handle-message ws msg)))
     (websocket-driver:on :close ws
                          (lambda (&key code reason)
                            (declare (ignore code reason))

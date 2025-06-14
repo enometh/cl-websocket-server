@@ -1,4 +1,4 @@
-;;; 
+;;;
 ;;; websocket-server.lisp
 ;;;
 ;;; **********************************************************************
@@ -10,7 +10,7 @@
 ;;; modify it under the terms of the Gnu Public License, version 2 or
 ;;; later. See https://www.gnu.org/licenses/gpl-2.0.html for the text
 ;;; of this agreement.
-;;; 
+;;;
 ;;; This program is distributed in the hope that it will be useful,
 ;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -21,8 +21,8 @@
 (in-package :websocket-server)
 
 ;; make a hash table to map connections to nicknames
-(defparameter *ws* nil)
-(defparameter *connections* (make-hash-table))
+(defvar *ws* nil)
+(defvar *connections* (make-hash-table))
 
 ;; and assign a random nickname to a user upon connection
 (defun handle-new-connection (con)
@@ -66,16 +66,11 @@
       (declare (ignore responder))
       (websocket-driver:start-connection ws)))) ; send the handshake
 
-(defparameter *msg* nil)
-
 ;; keep the handler around so that you can stop your server later on
 
-(defparameter *chat-handler* nil)
+(defvar *chat-handler* nil)
 
-;;; (setf *chat-handler* (clack:clackup #'chat-server :port 12345))
-
-;;; (hunchentoot::shutdown)
-
+;;; (setq *chat-handler* (clack:clackup #'chat-server :port 12345))
 ;;; (clack:stop *chat-handler*)
 
 (defun broadcast-message (msg)

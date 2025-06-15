@@ -16,9 +16,14 @@
 <script>
 
 let apr = "ws://localhost:12345";
-let socket = new WebSocket(apr);
+var socket = null
 let msgBox = document.getElementById("websocket-example");
 var pingerid;
+
+function open_ws() {
+    socket = new WebSocket(apr);
+    setup_ws();
+}
 
 function ping_ws() {
     if (socket.readyState == 1) {
@@ -37,6 +42,8 @@ function shutdown_ws() {
     clearInterval (pingerid);
 }
 
+function setup_ws()
+{
 socket.onopen = function(e) {
     console.log("[open] Connection established");
     pingerid = setInterval (function () {ping_ws();}, 40000);
@@ -62,6 +69,8 @@ socket.onclose = function(event) {
 socket.onerror = function(error) {
       console.log(`[error] ${error.message}`);
 };
+}
 
+window.onload = () => { open_ws(); }
 </script>
 </html>

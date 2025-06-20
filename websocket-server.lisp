@@ -40,6 +40,7 @@
   (let ((message (format nil "' .... ~a has left.'"
                          (gethash connection *connections*))))
     (remhash connection *connections*)
+    (when (eql *client* connection) (setq *client* nil))
     (loop :for con :being :the :hash-key :of *connections* :do
           (websocket-driver:send con message))))
 
@@ -71,6 +72,21 @@
 		(or (mailbox-result mbox)
 		    (mailbox-default-answer mbox)))
       (id-map-remove *id-map* id))))
+
+(defvar *client* nil)
+
+(defun client-or-default ()
+  (let ((client
+	 (or *client* (car (cl-user::hash-keys
+			    websocket-server::*connections*)))))
+    (check-type client WEBSOCKET-DRIVER.WS.SERVER:SERVER)
+    client))
+
+(defun execute (thunk)
+  (websocket-driver:send (client-or-default) thunk))
+
+(defun call-in-ws-repl (thunk)
+  (query (client-or-default) thunk))
 
 (defun handle-message (ws msg)
   (cond ((equal msg "Heartbeat")

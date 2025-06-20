@@ -8,4 +8,7 @@
   (:export
    #:chat-server
    #:broadcast-message
-   "QUERY"))
+   "QUERY"
+   "EXECUTE"
+   "*CLIENT*"
+   "CALL-IN-WS-REPL"))

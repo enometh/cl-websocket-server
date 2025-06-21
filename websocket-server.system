@@ -18,6 +18,7 @@
   :source-extension "lisp"
   :depends-on (:clack
 	       :cl-ppcre
+	       :parse-number
 	       :websocket-driver)
   :components ((:file "package")
 	       (:file "util")

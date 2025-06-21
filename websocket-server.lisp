@@ -56,7 +56,12 @@
 
 (defvar *query-time-out* 5)
 
-(defstruct mailbox result semaphore default-answer)
+(defstruct mailbox result semaphore errorp default-answer)
+
+(define-condition websocket-repl-error (error)
+  ((error-report :initarg :error-report :reader error-report))
+  (:report (lambda (condition stream)
+	     (format stream "~a" (error-report condition)))))
 
 (defun query (connection script &optional default-answer)
   (let* ((mbox (make-mailbox :semaphore (bt:make-semaphore)
@@ -64,13 +69,26 @@
 	 (id (id-map-add *id-map* mbox)))
     (websocket-driver:send
      connection
-     (format nil "socket.send (\"~A:\"+eval(\"~A\"));"
-	     id
-	     (escape-string script)))
+     (format nil "var result = null;
+var id = \"~A\";
+var numberp = null;
+var errorp = 'NIL';
+try {
+  result = eval(\"~A\");
+  numberp = typeof result === 'number' ? 'T' : 'NIL';
+} catch (error) {
+  result = error;
+  numberp = 'NIL';
+  errorp = 'T';
+} finally {
+  socket.send('(' + id + ' ' + numberp + ' ' + errorp + ')' + result);
+};" id (escape-string script)))
     (unwind-protect
 	 (progn (bt:wait-on-semaphore (mailbox-semaphore mbox) :timeout *query-time-out*)
-		(or (mailbox-result mbox)
-		    (mailbox-default-answer mbox)))
+		(if (mailbox-errorp mbox)
+		    (error 'websocket-repl-error :error-report (mailbox-result mbox))
+		    (or (mailbox-result mbox)
+			(mailbox-default-answer mbox))))
       (id-map-remove *id-map* id))))
 
 (defvar *client* nil)
@@ -94,10 +112,17 @@
 	((user:prefixp "eval:" msg)
 	 (handle-chat-msg ws (subseq msg 5)))
 	(t	;javascript execution result
-	 (let* ((p (position #\: msg))
-		(mbox (id-map-peek *id-map* (parse-integer msg :end p))))
-	   (setf (mailbox-result mbox) (subseq msg (1+ p)))
-	   (bt:signal-semaphore (mailbox-semaphore mbox))))))
+	 (let* ((*read-eval* t))
+	   (multiple-value-bind (elts offset)
+	       (read-from-string msg)
+	     (destructuring-bind (id numberp errorp) elts
+	       (let ((mbox (id-map-peek *id-map* id)))
+		 (setf (mailbox-errorp mbox) errorp)
+		 (setf (mailbox-result mbox)
+		       (if numberp
+			   (parse-number:parse-number msg :start offset)
+			   (subseq msg offset)))
+		 (bt:signal-semaphore (mailbox-semaphore mbox)))))))))
 
 (defun chat-server (env)
   (let ((ws (websocket-driver:make-server env)))

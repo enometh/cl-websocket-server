@@ -106,23 +106,25 @@ try {
 (defun call-in-ws-repl (thunk)
   (query (client-or-default) thunk))
 
+(defun handle-js-query (msg)
+  (let* ((*read-eval* nil))
+    (multiple-value-bind (elts offset)
+	(read-from-string msg)
+      (destructuring-bind (id numberp errorp) elts
+	(let ((mbox (id-map-peek *id-map* id)))
+	  (setf (mailbox-errorp mbox) errorp)
+	  (setf (mailbox-result mbox)
+		(if numberp
+		    (parse-number:parse-number msg :start offset)
+		    (subseq msg offset)))
+	  (bt:signal-semaphore (mailbox-semaphore mbox)))))))
+
 (defun handle-message (ws msg)
   (cond ((equal msg "Heartbeat")
 	 (websocket-driver:send ws "'Pong'"))
 	((user:prefixp "eval:" msg)
 	 (handle-chat-msg ws (subseq msg 5)))
-	(t	;javascript execution result
-	 (let* ((*read-eval* t))
-	   (multiple-value-bind (elts offset)
-	       (read-from-string msg)
-	     (destructuring-bind (id numberp errorp) elts
-	       (let ((mbox (id-map-peek *id-map* id)))
-		 (setf (mailbox-errorp mbox) errorp)
-		 (setf (mailbox-result mbox)
-		       (if numberp
-			   (parse-number:parse-number msg :start offset)
-			   (subseq msg offset)))
-		 (bt:signal-semaphore (mailbox-semaphore mbox)))))))))
+	(t (handle-js-query msg))))
 
 (defun chat-server (env)
   (let ((ws (websocket-driver:make-server env)))

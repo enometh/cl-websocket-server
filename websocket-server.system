@@ -22,7 +22,8 @@
 	       :websocket-driver)
   :components ((:file "package")
 	       (:file "util")
-	       (:file "websocket-server")))
+	       (:file "websocket-server")
+	       (:file "mini-clog")))
 
 #+nil
 (mk:oos :websocket-server :load :compile-during-load t)

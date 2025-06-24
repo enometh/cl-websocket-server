@@ -103,8 +103,63 @@ try {
 (defun execute (thunk)
   (websocket-driver:send (client-or-default) thunk))
 
+
+;;; ----------------------------------------------------------------------
+;;;
+;;; batch-transactions:  batch calls to call-in-ws-repl
+;;;
+
+(defvar *batch-transactions* nil)
+(defvar *batch-transactions-dry-run-p* nil)
+
+(defun begin-batch-transactions ()
+  (assert (null *batch-transactions*))
+  (setq *batch-transactions* (make-string-output-stream)))
+
+(defun end-batch-transactions ()
+  (assert (streamp *batch-transactions*))
+  (let ((code (get-output-stream-string *batch-transactions*)))
+    (cond (*batch-transactions-dry-run-p* code)
+	  (t (setq *batch-transactions* nil)
+	     (call-in-ws-repl code)))))
+
+;; rly with-botched-transactions
+(defmacro with-batch-transactions ((&key dry-run-p) &body body)
+  `(let ((*batch-transactions-dry-run-p* ,dry-run-p)
+	 ;;rebind to protect global value against errrors in body
+	 (*batch-transactions* nil))
+     (progn (begin-batch-transactions)
+	    ,@body
+	    (end-batch-transactions))))
+
+(defun ends-with-semicolon (string)
+  (loop for i from (1- (length string)) downto 0
+	for c = (char string i)
+	do (cond ((find c #(#\Newline #\Space #\Tab)) t)
+		 ((eql c #\;) (return t))
+		 (t (return nil)))))
+
+(defun collect-batch-transactions (string)
+  (write-string string *batch-transactions*)
+  (unless (ends-with-semicolon string)
+    (write-char #\; *batch-transactions*)
+    (terpri *batch-transactions*))
+  :invalid)
+
+
+
+;;; ----------------------------------------------------------------------
+;;;
+;;; if *batch-transactions* is non-NIL collect STRING thunk in it,
+;;; otherwise execute thunk.
+
 (defun call-in-ws-repl (thunk)
-  (query (client-or-default) thunk))
+  (if *batch-transactions*
+      (collect-batch-transactions thunk)
+      (let ((*client* (or *client* (car (cl-user::hash-keys
+					 websocket-server::*connections*)))))
+	(check-type *client* WEBSOCKET-DRIVER.WS.SERVER:SERVER)
+	(query *client*  thunk))))
 
 (defun handle-js-query (msg)
   (let* ((*read-eval* nil))

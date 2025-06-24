@@ -11,7 +11,9 @@
 
 (defpackage "MINI-CLOG"
   (:use "CL")
-  (:import-from "WEBSOCKET-SERVER" "CALL-IN-WS-REPL"))
+  (:import-from "WEBSOCKET-SERVER"
+   "CALL-IN-WS-REPL"
+   "WITH-BATCH-TRANSACTIONS"))
 (in-package "MINI-CLOG")
 
 ;;; ad-hoc hooks system

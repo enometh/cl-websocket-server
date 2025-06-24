@@ -69,8 +69,8 @@ objreg[prog_id]=initShaders(objreg[gl_id], '~A', '~A');
 prog_id
 "
 			   gl-id prog-id
-			   (websocket-server::escape-string vertString)
-			   (websocket-server::escape-string fragString))))
+			   (escape-string vertString)
+			   (escape-string fragString))))
 
 
 

@@ -13,7 +13,8 @@
   (:use "CL")
   (:import-from "WEBSOCKET-SERVER"
    "CALL-IN-WS-REPL"
-   "WITH-BATCH-TRANSACTIONS"))
+   "WITH-BATCH-TRANSACTIONS"
+   "ESCAPE-STRING"))
 (in-package "MINI-CLOG")
 
 ;;; ad-hoc hooks system
@@ -127,7 +128,7 @@ html_id"
     would not be wonderful to meet a Megalosaurus, forty feet long or so,
     waddling like an elephantine lizard up Holborn Hill.")
 (setf (get-prop $p "innerHTML")
-      (concatenate 'string "'" (websocket-server::escape-string $txt) "'"))
+      (concatenate 'string "'" (escape-string $txt) "'"))
 websocket-server:*client*
 (setq $s (create-element "script"))
 ;; define a function `ty' on the webpage and call it

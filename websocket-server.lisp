@@ -71,11 +71,15 @@
      connection
      (format nil "var result = null;
 var id = \"~A\";
-var numberp = null;
+var numberp = 'NIL';
 var errorp = 'NIL';
 try {
   result = eval(\"~A\");
-  numberp = typeof result === 'number' ? 'T' : 'NIL';
+  if (typeof result === 'number') {
+    numberp = ':NUMBER';
+  } else if (typeof result === 'boolean') {
+    numberp = ':BOOLEAN';
+  }
 } catch (error) {
   result = error;
   numberp = 'NIL';
@@ -169,9 +173,13 @@ try {
 	(let ((mbox (id-map-peek *id-map* id)))
 	  (setf (mailbox-errorp mbox) errorp)
 	  (setf (mailbox-result mbox)
-		(if numberp
-		    (parse-number:parse-number msg :start offset)
-		    (subseq msg offset)))
+		(ecase numberp
+		  (:number (parse-number:parse-number msg :start offset))
+		  (:boolean (let ((ret (subseq msg offset)))
+			      (cond ((equal ret "true") t)
+				    ((equal ret "false") nil)
+				    (t (error "Sanity")))))
+		  ((nil)  (subseq msg offset))))
 	  (bt:signal-semaphore (mailbox-semaphore mbox)))))))
 
 (defun handle-message (ws msg)

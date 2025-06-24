@@ -57,6 +57,9 @@ check_id = function (id) {
 document.body.id= 'body'; objreg['body']=document.body")
   (run-hooks '*boot-hooks*))
 
+(defun by-id (id)
+  (call-in-ws-repl (format nil "document.getElementById('~A')" id)))
+
 (defun get-objreg (id)
   ;; "defined for illustration-al purposes only"
   (call-in-ws-repl (format nil "objreg['~A']" id)))

@@ -93,22 +93,32 @@ void main()
     (bind-vertex-array gl vao)
     (enable-vertex-attribute-array gl pos)
     (vertex-attribute-pointer gl pos 2 :FLOAT nil 0 0)
-    (viewport gl 0 0 (min width height) (min width height))))
+    (viewport gl 0 0 (min width height) (min width height))
+    (call-in-ws-repl "render_p = false; theta = 0.0; pi=3.14; delay=1000;")))
 
 (defmethod draw-fn ((app breen4-app))
-  (with-slots (gl program vao theta theta-loc) app
+  (with-slots (gl program vao #|theta|# theta-loc) app
     (clear-color gl 0.0 0.0 0.0 1.0)
     (clear-webgl gl :COLOR_BUFFER_BIT)
     (use-program gl program)
     (bind-vertex-array gl vao)
+    #||
     (decf theta 0.01)
     (if (or (>= theta  (coerce pi 'single-float))
 	    (<= theta (-  (coerce pi 'single-float))))
 	(setq theta 0.0))
+    (uniform-float gl theta-loc theta)
+    ||#
+    (call-in-ws-repl "theta -=  0.01; if ((theta > pi) || (theta < -pi)) { theta = 0.00; }")
+    (call-in-ws-repl (format nil "objreg['~A'].uniform1fv(objreg['~A'], new Float32Array([theta]))" gl theta-loc))
     ;;(gl:clear-color 0.5 0.2 0.2 1.0)
     ;;(clear-webgl gl (list :color_buffer_bit :depth_buffer_bit))
-    (uniform-float gl theta-loc theta)
     (draw-arrays gl :TRIANGLE_FAN 0 4)))
+
+#+nil
+(with-batch-transactions (:dry-run-p t)
+  (with-slots (gl theta-loc) $app
+    (uniform-float gl theta-loc 0)))
 
 (defvar $canvas nil)
 
@@ -146,4 +156,28 @@ void main()
 (clack:stop websocket-server::*chat-handler*)
 (call-in-ws-repl "socket.onmessage")
 (call-in-ws-repl "socket.onmessage = function (event) { eval(event.data) }")
+||#
+
+;; ;madhu 250624 - calling draw-fn from lisp is too expensive.  the
+;; render function must be javascript only.  Use
+;; `with-batch-transactions' to extract the javascript code from
+;; draw-fn and define a render function in javascript, and render that
+;; with requestAnimationFrame
+
+#+nil
+(call-in-ws-repl
+ (concatenate 'string "animate = function () {"
+	      (with-batch-transactions (:dry-run-p t)
+		(draw-fn $app))
+	      "if (render_p) {
+	setTimeout(
+		function (){requestAnimationFrame(animate);}, delay
+	);
+}"
+	      "}"))
+
+#||
+(call-in-ws-repl "render_p=true; animate();")
+(call-in-ws-repl "render_p=false;")
+(call-in-ws-repl "delay=100;render_p=true;")
 ||#

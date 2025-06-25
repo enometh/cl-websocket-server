@@ -78,19 +78,22 @@ tree with APPEND-CHILD.)"
 (defun generate-id ()
   (incf (car *new-id*)))
 
+(defmacro with-id-var ((id-var) &body body)
+  `(let ((,id-var (or ,id-var (format nil "G~A-~A" ',id-var (generate-id)))))
+     ,@body))
+
 (defun create-element (tagname &optional html-id)
   "Creates and registers an htmlElement of type TAGNAME.  Does not
 add it to the document's children."
-  (unless html-id
-    (setq html-id (format nil "G~A~A" tagname (generate-id))))
-  (call-in-ws-repl (format nil "
+  (with-id-var (html-id)
+    (call-in-ws-repl (format nil "
 var html_id = '~A';
 var tagname = '~A';
 check_id(html_id);
 objreg[html_id] = document.createElement(tagname);
 objreg[html_id].id = html_id;
 html_id"
-			   html-id tagname)))
+			     html-id tagname))))
 
 (defun get-attr (html-id attr &rest more-attrs)
   (call-in-ws-repl (format nil "objreg['~A'].getAttribute('~A')~{?.getAttribute('~A')~}" html-id attr more-attrs)))

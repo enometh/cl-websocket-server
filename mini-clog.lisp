@@ -17,6 +17,21 @@
    "ESCAPE-STRING"))
 (in-package "MINI-CLOG")
 
+;;; GENERAL  NOTES
+;;;
+;;; 1. no clos objects. dom elements are directly designated by "id
+;;; strings" which are indexed in the `objreg' dictionary of the web
+;;; page. `objreg' is initialized by calling `boot'.
+;;;
+;;; 2. `create-*' functions take a mandatory (sic) &optional id-var in
+;;; the lambda list which helps the programmer name the id strings
+;;; directly.  This leads to idiosyncratic non-standard &optional &key
+;;; signatures which may annoy in the programmer in a non-experimental
+;;; setting.
+;;;
+;;; 3. no generic functions or methods. so API functions have to use
+;;; prefixes to differentiate (e.g. rotate vs. matrix-rotate).
+
 ;;; ad-hoc hooks system
 (defun add-to-hook (hook-var sym &optional prepend)
   (check-type sym symbol)

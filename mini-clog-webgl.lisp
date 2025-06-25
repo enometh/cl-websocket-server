@@ -16,9 +16,8 @@
 
 ;; probably adapted from drexel webgl coursework code
 (defun init-shaders (gl-id vertString fragString &optional prog-id)
-  (unless prog-id
-    (setq prog-id (format nil "Gprorg~A" (generate-id))))
-  (call-in-ws-repl (format nil "
+  (with-id-var (prog-id)
+    (call-in-ws-repl (format nil "
 var gl_id = '~A';
 var prog_id = '~A';
 
@@ -68,9 +67,9 @@ check_id(prog_id);
 objreg[prog_id]=initShaders(objreg[gl_id], '~A', '~A');
 prog_id
 "
-			   gl-id prog-id
-			   (escape-string vertString)
-			   (escape-string fragString))))
+			     gl-id prog-id
+			     (escape-string vertString)
+			     (escape-string fragString)))))
 
 
 
@@ -79,8 +78,8 @@ prog_id
 ;;; api mostly copied and changed from clog/src/clog-webgl.lisp
 ;;;
 
-(defun create-webgl (canvas-id &optional id (context "webgl2") attributes)
-  (let ((context-id (or id (format nil "Ggl~A" (generate-id)))))
+(defun create-webgl (canvas-id &optional context-id (context "webgl2") attributes)
+  (with-id-var (context-id)
     (call-in-ws-repl (format nil "
 var canvas_id = '~A';
 var context_id = '~A';
@@ -94,8 +93,8 @@ context_id
   (call-in-ws-repl (format nil "objreg['~A'].getAttribLocation(objreg['~A'], '~A')"
 			   gl-id program-id name)))
 
-(defun uniform-location (gl-id prog-id name &optional id)
-  (let ((uniform-id (or id (format nil "Guniform~A" (generate-id)))))
+(defun uniform-location (gl-id prog-id name &optional uniform-id)
+  (with-id-var (uniform-id)
     (call-in-ws-repl (format nil "
 gl_id = '~A';
 prog_id = '~A';
@@ -162,17 +161,17 @@ buf_id = '~A';
 objreg[gl_id].bindBuffer(objreg[gl_id].~A,objreg[buf_id])"
 			   gl-id webgl-buffer-id glenum-target)))
 
-(defun create-webgl-buffer (gl-id &optional id)
-  (unless id (setq id (format nil "Gbuf~A" (generate-id))))
-  (call-in-ws-repl (format nil "
+(defun create-webgl-buffer (gl-id &optional webgl-buffer-id)
+  (with-id-var (webgl-buffer-id)
+    (call-in-ws-repl (format nil "
 gl_id = '~A';
 ret_id = '~A';
 objreg[ret_id] = objreg[gl_id].createBuffer();
 ret_id"
-		   gl-id id)))
+			     gl-id webgl-buffer-id))))
 
-(defun create-vertex-array (gl-id &optional id)
-  (let ((vao-id (or id (format nil "Gvao~A" (generate-id)))))
+(defun create-vertex-array (gl-id &optional vao-id)
+  (with-id-var (vao-id)
     (call-in-ws-repl (format nil "
 gl_id = '~A';
 vao_id = '~A';
@@ -188,15 +187,15 @@ prog_id = '~A';
 objreg[gl_id].getProgramParameter(objreg[prog_id], objreg[gl_id].~A)"
 			   gl-id prog-id enum-param)))
 
-(defun active-attribute (gl-id prog-id index &optional id)
-  (unless id (setq id (format nil "Gactiveattrib~A" (generate-id))))
-  (call-in-ws-repl (format nil "
+(defun active-attribute (gl-id prog-id index &optional gl-attrib-id)
+  (with-id-var (gl-attrib-id)
+    (call-in-ws-repl (format nil "
 gl_id = '~A';
 prog_id = '~A';
 ret_id = '~A';
 objreg[ret_id] = objreg[gl_id].getActiveAttrib(objreg[prog_id], ~A);
 ret_id"
-			   gl-id prog-id id index)))
+			     gl-id prog-id gl-attrib-id index))))
 
 #||
 (program-parameter "gl"   "Gprorg24"	  :ACTIVE_ATTRIBUTES)

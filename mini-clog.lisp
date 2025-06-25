@@ -97,6 +97,9 @@ tree with APPEND-CHILD.)"
   `(let ((,id-var (or ,id-var (format nil "G~A-~A" ',id-var (generate-id)))))
      ,@body))
 
+(defun method-call (obj methodname &rest args)
+  (call-in-ws-repl (format nil "objreg['~A'].~A(~{~A~^,~})" obj methodname args)))
+
 (defun create-element (tagname &optional html-id)
   "Creates and registers an htmlElement of type TAGNAME.  Does not
 add it to the document's children."

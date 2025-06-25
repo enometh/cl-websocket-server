@@ -61,9 +61,12 @@ document.body.id= 'body'; objreg['body']=document.body")
 (defun by-id (id)
   (call-in-ws-repl (format nil "document.getElementById('~A')" id)))
 
+(defun objreg (id)
+  (format nil "objreg['~A']" id))
+
 (defun get-objreg (id)
   ;; "defined for illustration-al purposes only"
-  (call-in-ws-repl (format nil "objreg['~A']" id)))
+  (call-in-ws-repl (objreg id)))
 
 (defun delete-element (child-id)
   "Remove an htmlElement with id CHILD-ID from the document tree. (This

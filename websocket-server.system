@@ -25,7 +25,8 @@
 	       (:file "websocket-server")
 	       (:file "mini-clog")
 	       (:file "mini-clog-webgl")
-	       (:file "mini-clog-gl-demo")))
+	       (:file "mini-clog-gl-demo")
+	       (:file "mini-clog-canvas")))
 
 #+nil
 (mk:oos :websocket-server :load :compile-during-load t)

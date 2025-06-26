@@ -140,6 +140,18 @@ html_id"
 			       "document.body")
 			   child-id)))
 
+(defun fmt-ws (fmt-string &rest fmt-args)
+  (call-in-ws-repl (apply #'format nil fmt-string fmt-args)))
+
+(defun insert-before (child-id before-id &optional parent-html-id)
+  (fmt-ws "~A.insertBefore(objreg['~A'],objreg['~A']);"
+	   (if parent-html-id
+	       (format nil "objreg['~A']" parent-html-id)
+	       (format nil "objreg['~A'].parentNode"
+		       before-id))
+	   child-id
+	   before-id))
+
 #||
 (boot)
 (call-in-ws-repl "document.body.childElementCount")

@@ -188,3 +188,51 @@ void main()
 (call-in-ws-repl "render_p=false;")
 (call-in-ws-repl "delay=100;render_p=true;")
 ||#
+
+
+
+#||
+;;; ----------------------------------------------------------------------
+;;;
+;;; Notes on using the event system to render the rotating square via
+;;; window.requestAnimationFrame
+;;;
+
+(defvar *render-p* t)
+(defvar *render-delay* 200)
+
+(defun request-animation-frame (fname)
+  (fmt-ws "if (~:[false~;true~]) { setTimeout(function (){requestAnimationFrame(~(~A~))}, ~A	) }"
+	  *render-p* fname *render-delay*))
+
+#+nil
+(with-batch-transactions (:dry-run-p t)
+  (request-animation-frame "foo" 20))
+
+(defun square-animation-callback (event-data)
+  (declare (ignore event-data))
+  (with-batch-transactions (:dry-run-p t)
+    (draw-fn $app)
+    (request-animation-frame "call_square_animation")))
+
+(websocket-server::register-event-script-callback "square-animation" 'square-animation-callback)
+
+#+nil
+(gethash (websocket-server::client-or-default)
+	 websocket-server::*connection-event-callbacks*)
+
+;;(fmt-ws "anim_event")
+(fmt-ws "anim_event = new Event('square-animation')")
+;;(fmt-ws "call_square_animation")
+(fmt-ws "call_square_animation = function (e) { socket.send('event:square-animation nodata') }")
+;;(fmt-ws "objreg['gl-canvas']")
+(fmt-ws "objreg['gl-canvas'].addEventListener('square-animation', call_square_animation , false );")
+
+(progn (setq *render-p* t *render-delay* 200)
+       (request-animation-frame "call_square_animation"))
+(setq *render-p* nil)
+
+;; other ways to trigger
+;;(fmt-ws "objreg['gl-canvas'].dispatchEvent(anim_event);" )
+;;(fmt-ws "socket.send('event:square-animation ')")
+||#

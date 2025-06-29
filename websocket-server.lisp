@@ -168,10 +168,7 @@ try {
 (defun call-in-ws-repl (thunk)
   (if *batch-transactions*
       (collect-batch-transactions thunk)
-      (let ((*client* (or *client* (car (cl-user::hash-keys
-					 websocket-server::*connections*)))))
-	(check-type *client* WEBSOCKET-DRIVER.WS.SERVER:SERVER)
-	(query *client*  thunk))))
+      (query (client-or-default) thunk)))
 
 (defun handle-js-query (msg)
   (let* ((*read-eval* nil))

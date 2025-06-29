@@ -24,6 +24,9 @@
 (defvar *ws* nil)
 (defvar *connections* (make-hash-table))
 
+(defvar *connection-event-callbacks* (make-hash-table :test #'equal))
+
+
 ;; and assign a random nickname to a user upon connection
 (defun handle-new-connection (con)
   (setf (gethash con *connections*)
@@ -40,6 +43,10 @@
   (let ((message (format nil "' .... ~a has left.'"
                          (gethash connection *connections*))))
     (remhash connection *connections*)
+    (progn
+      (let ((event-hash (gethash connection *connection-event-callbacks*)))
+	(when event-hash (clrhash *connection-event-callbacks*)))
+      (remhash connection *connection-event-callbacks*))
     (when (eql *client* connection) (setq *client* nil))
     (loop :for con :being :the :hash-key :of *connections* :do
           (websocket-driver:send con message))))
@@ -184,11 +191,33 @@ try {
 		  ((nil)  (subseq msg offset))))
 	  (bt:signal-semaphore (mailbox-semaphore mbox)))))))
 
+(defun handle-event-msg (connection msg)
+  (with-simple-restart (cont "Cont")
+    (let* ((pos (position #\Space msg))
+	   (event-id (progn (assert pos) (subseq msg 0 pos)))
+	   (event-data (subseq msg (1+ pos)))
+	   (event-hash (gethash connection *connection-event-callbacks*))
+	   (callback (and event-hash
+			  (gethash event-id event-hash))))
+      (cond (callback (funcall callback event-data))
+	    (t (error "no callback found for event msg ~A" msg))))))
+
+(defvar *thread-per-event-message* t
+  "Setting this to T handles every event callback on it's own thread.
+If event callback functions make calls to call-in-ws-repl then the single-threaded
+`emitter' will make sure these calls will time out because it never gets around
+to running handle-js-query." )
+
 (defun handle-message (ws msg)
   (cond ((equal msg "Heartbeat")
 	 (websocket-driver:send ws "'Pong'"))
 	((user:prefixp "eval:" msg)
 	 (handle-chat-msg ws (subseq msg 5)))
+	((user:prefixp "event:" msg)
+	 (flet ((doit () (handle-event-msg ws (subseq msg 6))))
+	   (if *thread-per-event-message*
+	       (bt:make-thread #'doit)
+	       (doit))))
 	(t (handle-js-query msg))))
 
 (defun chat-server (env)
@@ -200,12 +229,53 @@ try {
                          (lambda (msg) (handle-message ws msg)))
     (websocket-driver:on :close ws
                          (lambda (&key code reason)
-                           (declare (ignore code reason))
+			   ;; (declare (ignore code reason))
+                           (warn "ON-CLOSE-CONNECTION ~S" (list :code code :reason reason))
                            (handle-close-connection ws)))
     (lambda (responder)
       (declare (ignore responder))
       (websocket-driver:start-connection ws)))) ; send the handshake
 
+;; events support a crude rude version of the clog model
+;;
+;; when a dom event fires an on-event js callback is called.  the
+;; client must 1. register an event listener handler with the webpage
+;; by calling EventTarget.addEventListener on some element l
+;; 2. arrange to call socket.send("event:event-id data") when the
+;; event fires through the event listener created in step 1.
+;; 3. register a callback on *connection-event-callbacks* with the
+;; event-id which will be called by the server when it receives the
+;; "event:" mesage from the client in step 2
+
+(defun register-event-script-callback (event-id lisp-callback)
+  (let ((event-hash
+	 (gethash (client-or-default) *connection-event-callbacks*)))
+    (unless event-hash
+      (setf (gethash (client-or-default) *connection-event-callbacks*)
+	    (setq event-hash (make-hash-table :test #'equal))))
+    (setf (gethash event-id event-hash) lisp-callback)))
+
+
+#||
+(defun hello-event-callback (event-data)
+  (format t "hello-event-callback(~A)~&" event-data)
+  #+nil
+  (call-in-ws-repl "console.log('foo')"))
+(register-event-script-callback "hello-event" 'hello-event-callback)
+websocket-server::*connection-event-callbacks*
+(call-in-ws-repl "hello_event")
+(with-batch-transactions ()
+(call-in-ws-repl "hello_event = new Event('hello-event')")
+(call-in-ws-repl "call_hello_event = function (e) { socket.send('event:hello-event nodata') }")
+(call-in-ws-repl "document.body.addEventListener('hello-event', call_hello_event , false );"))
+(call-in-ws-repl "document.body.dispatchEvent(hello_event);" )
+||#
+
+
+;;; ----------------------------------------------------------------------
+;;;
+;;;
+;;;
 ;; keep the handler around so that you can stop your server later on
 
 (defvar *chat-handler* nil)

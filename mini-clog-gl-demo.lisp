@@ -207,11 +207,11 @@ void main()
 
 #+nil
 (with-batch-transactions (:dry-run-p t)
-  (request-animation-frame "foo" 20))
+  (request-animation-frame "foo"))
 
 (defun square-animation-callback (event-data)
   (declare (ignore event-data))
-  (with-batch-transactions (:dry-run-p t)
+  (with-batch-transactions (:dry-run-p nil)
     (draw-fn $app)
     (request-animation-frame "call_square_animation")))
 

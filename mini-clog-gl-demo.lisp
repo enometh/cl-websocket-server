@@ -131,17 +131,17 @@ void main()
   (setf (get-prop "gl-canvas" "style" "background") "'black'")
   $canvas)
 
-(add-to-hook '*boot-hooks* 'make-canvas)
+;; (add-to-hook '*boot-hooks* 'make-canvas)
 
 #||
 (setq websocket-server::*chat-handler*
       (clack:clackup #'websocket-server:chat-server :port 12345))
 ;; *boot-hooks*
 ;; $canvas
+(boot)
 ;; (make-canvas)
 ;; (call-in-ws-repl "document.getElementById('gl-canvas') === objreg['gl-canvas']")
 
-(boot)
 (setf (slot-value $app 'width) (parse-integer (get-attr "gl-canvas" "width")))
 (setf (slot-value $app 'height) (parse-integer (get-attr "gl-canvas" "height")))
 (slot-value $app 'theta)
@@ -155,7 +155,14 @@ void main()
 
 (clack:stop websocket-server::*chat-handler*)
 (call-in-ws-repl "socket.onmessage")
+;; shut up the message box
 (call-in-ws-repl "socket.onmessage = function (event) { eval(event.data) }")
+;; put the canvas above the chatty messagebox
+(fmt-ws "objreg['~A']=document.getElementById('~:*~A')" "websocket-example")
+(setq $div (create-element "div" "box"))
+(append-child $div)
+(insert-before $div "websocket-example")
+(append-child $canvas $div)
 ||#
 
 ;; ;madhu 250624 - calling draw-fn from lisp is too expensive.  the

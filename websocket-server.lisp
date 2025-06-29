@@ -93,7 +93,8 @@ try {
 		    (error 'websocket-repl-error :error-report (mailbox-result mbox))
 		    (or (mailbox-result mbox)
 			(mailbox-default-answer mbox))))
-      (id-map-remove *id-map* id))))
+      (with-simple-restart (cont "CONT")
+	(id-map-remove *id-map* id)))))
 
 (defvar *client* nil)
 
@@ -170,7 +171,8 @@ try {
     (multiple-value-bind (elts offset)
 	(read-from-string msg)
       (destructuring-bind (id numberp errorp) elts
-	(let ((mbox (id-map-peek *id-map* id)))
+	(let ((mbox (with-simple-restart (cont "CONT") (id-map-peek *id-map* id))))
+	  (unless mbox (return-from handle-js-query :FAIL))
 	  (setf (mailbox-errorp mbox) errorp)
 	  (setf (mailbox-result mbox)
 		(ecase numberp

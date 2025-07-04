@@ -6,7 +6,11 @@
 ;;;   Status: Experimental.  Do not redistribute
 ;;;   Copyright (C) 2025 Madhu.  All Rights Reserved.
 ;;;
-(in-package "MINI-CLOG")
+(defpackage "BREEN4-DEMO"
+  (:use "CL"
+   "WEBSOCKET-SERVER"
+   "MINI-CLOG"))
+(in-package "BREEN4-DEMO")
 
 (defclass webgl-mixin ()
   ((width

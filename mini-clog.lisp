@@ -58,14 +58,15 @@
   "Initializes the `objreg' dictionary object on the default ws
 connection."
   (call-in-ws-repl "var boot = true;
+globalThis.objreg = null;
 try {
-  if (!(objreg === undefined)) {
+  if (!(objreg === null)) {
     boot = false;
   }
 } catch (error) {
 }
 if (boot) { objreg = {} }
-check_id = function (id) {
+globalThis.check_id = function (id) {
   if (!(undefined === objreg[id])) {
     throw `${id} already assigned to ${objreg[id].constructor.name}`
   }

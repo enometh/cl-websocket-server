@@ -1,10 +1,22 @@
+'use strict';
+
 let apr = "ws://localhost:12345";
 var socket = null
-let msgBox = document.getElementById("websocket-example");
+let msgBox = null;
+
+function ensure_msgbox() {
+    msgBox = document.getElementById("websocket-example");
+    if (!msgBox) {
+	msgBox = document.createElement("textbox");
+	msgBox.id = "websocket-example";
+	document.body.appendChild(msgBox);
+    }
+}
 var pingerid;
 var retryid;
 
 function open_ws() {
+    ensure_msgbox();
     socket = new WebSocket(apr);
     if (socket != null) {
 	setup_ws();

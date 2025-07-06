@@ -1,0 +1,72 @@
+let apr = "ws://localhost:12345";
+var socket = null
+let msgBox = document.getElementById("websocket-example");
+var pingerid;
+var retryid;
+
+function open_ws() {
+    socket = new WebSocket(apr);
+    if (socket != null) {
+	setup_ws();
+    }
+}
+
+function ping_ws() {
+    if (socket.readyState == 1) {
+	socket.send("Heartbeat");
+    } else {
+	console.log("[ping] - skip");
+    }
+}
+
+function shutdown_ws() {
+    if (socket != null) {
+	socket.onerror = null;
+	socket.onclose = null;
+	socket.close ();
+	socket = null;
+    }
+    msgBox.textContent = "shutdown"
+    clearInterval (pingerid);
+}
+
+function reconnect_ws(event) {
+    console.log(`reconnect: {event}`)
+    clearInterval(retryid);
+    if (!(socket === null)) throw "sanity. shutdown_ws must be called before reconnect_ws";
+    open_ws();
+}
+
+function setup_ws()
+{
+socket.onopen = function(e) {
+    console.log("[open] Connection established");
+    pingerid = setInterval (function () {ping_ws();}, 15000);
+}
+
+socket.onmessage = function(event) {
+	<!-- console.log(`[message] Data received from server: ${event.data}`); -->
+	msgBox.textContent = `${event.data}`;
+	eval(event.data);
+};
+
+socket.onclose = function(event) {
+    if (event.wasClean) {
+	console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+    }
+    else {
+	// e.g. server process killed or network down // event.code is usually 1006 in this case
+	console.log('[close] Connection died');
+	retryid = setInterval(function(){reconnect_ws("[close] reconnecting")}, 15000);
+    }
+    shutdown_ws();
+};
+
+socket.onerror = function(error) {
+    console.log(`[error] ${error} ${error.message}`);
+    retryid = setInterval(function(){reconnect_ws("[error] reconnecting")}, 15000);
+    shutdown_ws();
+};
+}
+
+window.onload = () => { open_ws(); }

@@ -227,8 +227,9 @@ to running handle-js-query." )
     (websocket-driver:on :close ws
                          (lambda (&key code reason)
 			   ;; (declare (ignore code reason))
-                           (warn "ON-CLOSE-CONNECTION ~S" (list :code code :reason reason))
-                           (handle-close-connection ws)))
+			   (unwind-protect
+				(warn "ON-CLOSE-CONNECTION ~S" (list :code code :reason reason))
+			     (handle-close-connection ws))))
     (lambda (responder)
       (declare (ignore responder))
       (websocket-driver:start-connection ws)))) ; send the handshake

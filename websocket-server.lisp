@@ -165,10 +165,14 @@ try {
 ;;; if *batch-transactions* is non-NIL collect STRING thunk in it,
 ;;; otherwise execute thunk.
 
-(defun call-in-ws-repl (thunk)
+(defun call-in-ws-repl (thunk &key (errorp t))
   (if *batch-transactions*
       (collect-batch-transactions thunk)
-      (query (client-or-default) thunk)))
+      (let* ((default-answer (if errorp "'$#!&'" nil))
+	     (ret (query (client-or-default) thunk default-answer)))
+	(if (and errorp (equal ret default-answer))
+	    (error "timeout")
+	    ret))))
 
 (defun handle-js-query (msg)
   (let* ((*read-eval* nil))

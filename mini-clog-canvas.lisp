@@ -91,8 +91,8 @@
 
 (defun make-2d-canvas ()
   (setq $2d-canvas (create-element "canvas" "2d-canvas"))
-  (setf (get-attr $2d-canvas "width") 400)
-  (setf (get-attr $2d-canvas "height") 400)
+  (setf (get-prop $2d-canvas "width") 400)
+  (setf (get-prop $2d-canvas "height") 400)
   (assert (equal "null" (by-id $2d-canvas)))
   ;; (delete-element $2d-canvas)
   (append-child $2d-canvas)
@@ -233,7 +233,7 @@ values for (cdr args)."
 (defun fill-text  (context-id text x y &key (max-width nil))
   "Fill text with current fill-color"
   (apply #'method-call context-id "fillText"
-	 (escape-string text)
+	 (concatenate 'string "'" (escape-string text) "'")
 	 x y
 	 (if max-width
 	     (list max-width))))
